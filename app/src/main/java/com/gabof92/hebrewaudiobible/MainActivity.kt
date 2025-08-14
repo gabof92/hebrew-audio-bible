@@ -4,13 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import com.gabof92.hebrewaudiobible.ui.screens.MainScreen
+import com.gabof92.hebrewaudiobible.ui.screens.VerseDetailScreen
+import com.gabof92.hebrewaudiobible.ui.screens.mainScreenDestination
+import com.gabof92.hebrewaudiobible.ui.screens.verseDetailScreenDestination
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +18,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HebrewAudioBibleTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = MainScreen) {
+                    mainScreenDestination(
+                        onNavigateToVerseDetail = { book, chapter, verse ->
+                            navController.navigate(VerseDetailScreen(book, chapter, verse))
+                        },
                     )
+                    verseDetailScreenDestination()
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HebrewAudioBibleTheme {
-        Greeting("Android")
     }
 }
