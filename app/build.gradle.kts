@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     //compose navigation
     alias(libs.plugins.kotlin.serialization)
+    //KSP devtools (for room dependencies)
+    alias(libs.plugins.devtools.ksp)
 }
 
 android {
@@ -42,7 +44,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -63,4 +64,8 @@ dependencies {
     //compose navigation
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    //Room
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
 }
