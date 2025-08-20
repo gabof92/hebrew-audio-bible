@@ -1,0 +1,14 @@
+package com.gabof92.hebrewaudiobible.database
+
+import androidx.room.Dao
+import androidx.room.Query
+
+@Dao
+interface AudioSourceDao {
+    @Query("SELECT * FROM audio_source WHERE id = :id")
+    suspend fun getAudioSourceById(id: Int): AudioSource
+
+    @Query("SELECT * FROM audio_source " +
+            "WHERE BOOK=:book AND CHAPTER=:chapter")
+    suspend fun getChapterAudio(book: Int, chapter: Int): AudioSource
+}
