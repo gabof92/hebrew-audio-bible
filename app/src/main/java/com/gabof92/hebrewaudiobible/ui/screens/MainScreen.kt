@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -33,7 +34,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,10 +43,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.VerseText
+import com.gabof92.hebrewaudiobible.database.Book
 import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
+import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModel
+import com.gabof92.hebrewaudiobible.ui.viewmodel.MovieViewModelFactory
 import kotlinx.serialization.Serializable
 
 
@@ -54,15 +61,41 @@ import kotlinx.serialization.Serializable
 object MainScreen
 
 fun NavGraphBuilder.mainScreenDestination(
+    repository: BibleRoomRepository,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit
 ) {
     composable<MainScreen> {
-        MainScreen(onNavigateToVerseDetail)
+
+        val viewModel: MainViewModel = viewModel(factory = MovieViewModelFactory(repository))
+        // Collect the verseList StateFlow as state
+        // The UI will recompose whenever verseList in the ViewModel emits a new list
+        val verseList by viewModel.verseList.collectAsStateWithLifecycle()
+        val currentChapter by viewModel.currentChapter.collectAsStateWithLifecycle()
+        val currentBook by viewModel.currentBook.collectAsStateWithLifecycle()
+        // You might also want to collect currentBook if it's dynamic
+
+        // Initially, verseList will be emptyList() (or your initial StateFlow value)
+        // and will update once loadVerses() in the ViewModel completes.
+        MainScreen(
+            verseList = verseList,
+            book = currentBook,
+            chapter = currentChapter,
+            onNavigateToVerseDetail = onNavigateToVerseDetail,
+            onChapterChange = { newChapter -> // Add a callback for chapter changes
+                viewModel.loadVerses(viewModel.currentBook.value.number, newChapter)
+            }
+        )
     }
 }
 
 @Composable
-fun MainScreen(onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit) {
+fun MainScreen(
+    verseList: List<VerseText>,
+    book: Book,
+    chapter: Int,
+    onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit,
+    onChapterChange: (Int) -> Unit // Callback to inform ViewModel of chapter change
+) {
 
     val context = LocalContext.current
     var showHebrewText by remember { mutableStateOf(true) }
@@ -70,8 +103,6 @@ fun MainScreen(onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) ->
     var showEnglishText by remember { mutableStateOf(true) }
     val bottomBannerHeight = 56.dp
     var showChapterSelector by remember { mutableStateOf(false) }
-    var totalChapters by remember { mutableIntStateOf(128) }
-    var currentChapter by remember { mutableIntStateOf(1) }
 
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -82,39 +113,50 @@ fun MainScreen(onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) ->
         ) {
             Column {
                 TopBanner(
-                    text = "Genesis ${currentChapter}",
-                    onLeftCLick = {},
+                    text = "${book.name} $chapter",
+                    onLeftCLick = {
+                        val previousChapter = chapter - 1
+                        if (previousChapter >= 1)
+                            onChapterChange(previousChapter)
+                    },
                     onTextCLick = { showChapterSelector = true },
-                    onRightClick = {})
+                    onRightClick = {
+                        val nextChapter = chapter + 1
+                        if (nextChapter <= book.chapters)
+                            onChapterChange(nextChapter)
+                    }
+                )
+
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = bottomBannerHeight),
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    items(50) { index ->
+                    items(verseList) { verse ->
                         VerseListItem(
-                            verseNumber = index + 1,
+                            verseNumber = verse.verse,
                             showHebrewText = showHebrewText,
                             showTransliteration = showTransliteration,
                             showEnglishText = showEnglishText,
-                            hebrewText = "בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃",
-                            transliteration = "bə·rê·šîṯ bā·rā ’ĕ·lō·hîm; ’êṯ haš·šā·ma·yim wə·’êṯ hā·’ā·reṣ.",
-                            englishText = "In the beginning God created the heavens and the earth",
+                            hebrewText = verse.hebrew,
+                            transliteration = verse.transliteration,
+                            englishText = verse.translation,
                             onItemClick = {
                                 Toast.makeText(
                                     context,
-                                    "play audio verse: ${index + 1}",
+                                    "play audio verse: ${verse.verse}",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             },
                             onItemLongClick = {
-                                onNavigateToVerseDetail(1, currentChapter, index + 1)
+                                onNavigateToVerseDetail(book.number, chapter, verse.verse)
                             }
                         )
                     }
                 }
             }
+
             BottomBanner(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -128,14 +170,11 @@ fun MainScreen(onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) ->
                 },
                 onToggleEnglishClick = { showEnglishText = !showEnglishText },
             )
+
             if (showChapterSelector) {
                 ChapterSelectorDialog(
-                    chapters = totalChapters,
-                    onChapterSelected = {
-                        currentChapter = it
-                        Toast.makeText(context, "Selected chapter: $it", Toast.LENGTH_SHORT)
-                            .show()
-                    },
+                    chapters = book.chapters,
+                    onChapterSelected = onChapterChange,
                     onDismissRequest = { showChapterSelector = false }
                 )
             }
@@ -147,7 +186,7 @@ fun MainScreen(onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) ->
 @Composable
 private fun Preview() {
     HebrewAudioBibleTheme {
-        MainScreen(onNavigateToVerseDetail = { _, _, _ -> })
+        //MainScreen(onNavigateToVerseDetail = { _, _, _ -> })
     }
 }
 
