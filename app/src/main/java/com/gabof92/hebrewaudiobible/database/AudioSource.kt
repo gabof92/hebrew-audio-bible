@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "audio_source")
+@Entity(tableName = "audio_sources")
 data class AudioSource(
     @PrimaryKey
     val id: Int,
@@ -12,8 +12,6 @@ data class AudioSource(
     @ColumnInfo(name = "book")
     val book :Int,
     @ColumnInfo(name = "chapter")
-    val chapter :Int,
-    @ColumnInfo(name = "verse")
     val verse :Int,
     @ColumnInfo(name = "collection")
     val collection :String,

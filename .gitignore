@@ -13,4 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
-/src/main/assets/psalms_db_asset.db
+/src/main/assets/hebrew_bible_asset.db

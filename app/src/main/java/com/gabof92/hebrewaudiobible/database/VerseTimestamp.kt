@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "verse_timestamp")
+@Entity(tableName = "verse_timestamps")
 data class VerseTimestamp(
     @PrimaryKey
     val id: Int,

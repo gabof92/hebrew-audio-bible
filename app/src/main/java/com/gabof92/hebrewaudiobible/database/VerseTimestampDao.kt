@@ -5,10 +5,10 @@ import androidx.room.Query
 
 @Dao
 interface VerseTimestampDao {
-    @Query("SELECT * FROM verse_timestamp WHERE id = :id")
+    @Query("SELECT * FROM verse_timestamps WHERE id = :id")
     suspend fun getTimestampById (id: Int): VerseTimestamp
 
-    @Query("SELECT * FROM verse_timestamp " +
+    @Query("SELECT * FROM verse_timestamps " +
             "WHERE audio_source=:audioSource " +
             "ORDER BY milliseconds ASC")
     suspend fun getChapterTimestamps(audioSource: Int): List<VerseTimestamp>
