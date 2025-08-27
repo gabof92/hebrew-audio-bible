@@ -34,7 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 
 
 @Composable
-fun HtmlInfoScreen(
+fun WordDetailScreen(
     title: String,
     htmlContent: String,
     onDismissRequest: () -> Unit // You'll still need a way to "close" it
@@ -122,7 +122,7 @@ fun HtmlText(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    HtmlInfoScreen(
+    WordDetailScreen(
         "H7225",
         htmlContent = "Original: \u003Cb\u003E\u003Che\u003Eראשׁית\u003C/he\u003E\u003C/b\u003E \u003Cp /\u003ETransliteration: \u003Cb\u003Erêshı̂yth\u003C/b\u003E \u003Cp /\u003EPhonetic: \u003Cb\u003Eray-sheeth\u003C/b\u003E \u003Cp class=\"bdb_def\"\u003E\u003Cb\u003EBDB Definition\u003C/b\u003E:\u003C/p\u003E\u003Col\u003E\u003Cli\u003Efirst, beginning, best, chief\u003Col type=a\u003E\u003Cli\u003Ebeginning\u003C/li\u003E\u003Cli\u003Efirst\u003C/li\u003E\u003Cli\u003Echief\u003C/li\u003E\u003Cli\u003Echoice part\u003C/li\u003E\u003C/ol\u003E\u003C/li\u003E\u003C/ol\u003E \u003Cp /\u003EOrigin: from the same as \u003Ca href=S:H7218\u003EH7218\u003C/a\u003E \u003Cp /\u003ETWOT entry: \u003Ca class=\"T\" href=\"S:2097 - rosh\"\u003E2097e\u003C/a\u003E \u003Cp /\u003EPart(s) of speech: Noun Feminine ",
         onDismissRequest = { }

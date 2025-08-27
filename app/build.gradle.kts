@@ -68,4 +68,10 @@ dependencies {
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
+    // Retrofit with Moshi Converter
+    implementation(libs.retrofit2.converter.moshi)
+    // Moshi
+    implementation(libs.moshi.kotlin)
+    //interceptor to log retrofit requests
+    implementation(libs.okhttp3.logging.interceptor)
 }
