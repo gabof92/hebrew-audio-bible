@@ -10,9 +10,9 @@ interface OriginalWordDao {
     suspend fun getOriginalWord(id: Int): OriginalWord
 
     @Query("SELECT * FROM original_words " +
-            "WHERE BOOK=:book AND CHAPTER=:chapter " +
+            "WHERE BOOK=:book AND CHAPTER=:chapter AND VERSE=:verse " +
             "ORDER BY heb_sort ASC")
-    suspend fun getOriginalChapter(book: Int, chapter: Int): List<OriginalWord>
+    suspend fun getOriginalVerse(book: Int, chapter: Int, verse: Int): List<OriginalWord>
 
     @Query("""
         WITH hebrew AS (
