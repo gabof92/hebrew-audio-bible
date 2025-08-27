@@ -3,7 +3,7 @@ package com.gabof92.hebrewaudiobible.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.database.OriginalWord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class VerseDetailViewModel(
-    private val repository: BibleRoomRepository,
+    private val repository: BibleRepository,
     private val book: Int,
     private val chapter: Int,
     private val verse: Int,
@@ -51,7 +51,7 @@ class VerseDetailViewModel(
 }
 
 class VerseDetailViewModelFactory(
-    private val repository: BibleRoomRepository,
+    private val repository: BibleRepository,
     private val book: Int,
     private val chapter: Int,
     private val verse: Int,

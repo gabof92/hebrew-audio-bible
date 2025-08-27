@@ -47,7 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.VerseText
 import com.gabof92.hebrewaudiobible.database.Book
 import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
@@ -61,7 +61,7 @@ import kotlinx.serialization.Serializable
 object MainScreen
 
 fun NavGraphBuilder.mainScreenDestination(
-    repository: BibleRoomRepository,
+    repository: BibleRepository,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit
 ) {
     composable<MainScreen> {

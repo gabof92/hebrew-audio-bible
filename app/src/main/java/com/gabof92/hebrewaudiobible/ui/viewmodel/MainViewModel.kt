@@ -3,7 +3,7 @@ package com.gabof92.hebrewaudiobible.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.VerseText
 import com.gabof92.hebrewaudiobible.database.Book
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val repository: BibleRoomRepository,
+    private val repository: BibleRepository,
 ) : ViewModel() {
     // Private MutableStateFlow that will hold the current list of verses
     private val _verseList = MutableStateFlow<List<VerseText>>(emptyList())
@@ -48,7 +48,7 @@ class MainViewModel(
 
 }
 
-class MainViewModelFactory(private val repository: BibleRoomRepository) :
+class MainViewModelFactory(private val repository: BibleRepository) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {

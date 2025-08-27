@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.BibleRepository
+import com.gabof92.hebrewaudiobible.database.BibleRoomDataSource
+import com.gabof92.hebrewaudiobible.network.BollsBibleDataSource
 import com.gabof92.hebrewaudiobible.ui.screens.MainScreen
 import com.gabof92.hebrewaudiobible.ui.screens.VerseDetailScreen
 import com.gabof92.hebrewaudiobible.ui.screens.mainScreenDestination
@@ -18,12 +20,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val db = (application as App).database
-        val repository = BibleRoomRepository(
+        val remoteDataSource = BollsBibleDataSource()
+        val localDataSource = BibleRoomDataSource(
             db.originalWordDao(),
             db.audioSourceDao(),
             db.verseTimestampDao(),
             db.booksDao()
         )
+        val repository = BibleRepository(localDataSource, remoteDataSource)
 
         enableEdgeToEdge()
         setContent {
