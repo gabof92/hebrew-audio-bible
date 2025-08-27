@@ -38,7 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
 import com.gabof92.hebrewaudiobible.database.OriginalWord
-import com.gabof92.hebrewaudiobible.ui.HtmlInfoScreen
+import com.gabof92.hebrewaudiobible.ui.WordDetailScreen
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
 import kotlinx.serialization.Serializable
@@ -119,7 +119,7 @@ fun VerseDetailScreen(
                 onEngSortCLick = onEngSortCLick,
             )
             if (showHtmlInfo) {
-                HtmlInfoScreen(
+                WordDetailScreen(
                     "H7225",
                     htmlContent = "Original: \u003Cb\u003E\u003Che\u003Eראשׁית\u003C/he\u003E\u003C/b\u003E \u003Cp /\u003ETransliteration: \u003Cb\u003Erêshı̂yth\u003C/b\u003E \u003Cp /\u003EPhonetic: \u003Cb\u003Eray-sheeth\u003C/b\u003E \u003Cp class=\"bdb_def\"\u003E\u003Cb\u003EBDB Definition\u003C/b\u003E:\u003C/p\u003E\u003Col\u003E\u003Cli\u003Efirst, beginning, best, chief\u003Col type=a\u003E\u003Cli\u003Ebeginning\u003C/li\u003E\u003Cli\u003Efirst\u003C/li\u003E\u003Cli\u003Echief\u003C/li\u003E\u003Cli\u003Echoice part\u003C/li\u003E\u003C/ol\u003E\u003C/li\u003E\u003C/ol\u003E \u003Cp /\u003EOrigin: from the same as \u003Ca href=S:H7218\u003EH7218\u003C/a\u003E \u003Cp /\u003ETWOT entry: \u003Ca class=\"T\" href=\"S:2097 - rosh\"\u003E2097e\u003C/a\u003E \u003Cp /\u003EPart(s) of speech: Noun Feminine ",
                     onDismissRequest = { showHtmlInfo = false }
