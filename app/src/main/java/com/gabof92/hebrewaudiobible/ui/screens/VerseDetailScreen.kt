@@ -36,7 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.database.OriginalWord
 import com.gabof92.hebrewaudiobible.ui.WordDetailScreen
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
@@ -51,7 +51,7 @@ data class VerseDetailScreen(
 )
 
 fun NavGraphBuilder.verseDetailScreenDestination(
-    repository: BibleRoomRepository,
+    repository: BibleRepository,
 ) {
     composable<VerseDetailScreen> {
         val args = it.toRoute<VerseDetailScreen>()

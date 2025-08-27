@@ -1,17 +1,13 @@
-package com.gabof92.hebrewaudiobible.data
+package com.gabof92.hebrewaudiobible.database
 
-import com.gabof92.hebrewaudiobible.database.AudioSourceDao
-import com.gabof92.hebrewaudiobible.database.BooksDao
-import com.gabof92.hebrewaudiobible.database.OriginalWordDao
-import com.gabof92.hebrewaudiobible.database.VerseTimestampDao
+import com.gabof92.hebrewaudiobible.data.VerseText
 
-class BibleRoomRepository(
+class BibleRoomDataSource(
     val originalWordDao: OriginalWordDao,
     val audioSourceDao: AudioSourceDao,
     val verseTimestampDao: VerseTimestampDao,
     val booksDao: BooksDao
 ) {
-
     suspend fun getVerseWords(book: Int, chapter: Int, verse: Int) =
         originalWordDao.getOriginalVerse(book, chapter, verse)
 
@@ -19,5 +15,4 @@ class BibleRoomRepository(
 
     suspend fun getVerses(book: Int, chapter: Int): List<VerseText> =
         originalWordDao.getVerseTexts(book, chapter)
-
 }
