@@ -31,11 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.gabof92.hebrewaudiobible.data.BibleRoomRepository
+import com.gabof92.hebrewaudiobible.database.OriginalWord
 import com.gabof92.hebrewaudiobible.ui.HtmlInfoScreen
-import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
+import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
+import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -45,16 +50,40 @@ data class VerseDetailScreen(
     val verse: Int,
 )
 
-fun NavGraphBuilder.verseDetailScreenDestination() {
+fun NavGraphBuilder.verseDetailScreenDestination(
+    repository: BibleRoomRepository,
+) {
     composable<VerseDetailScreen> {
         val args = it.toRoute<VerseDetailScreen>()
-        VerseDetailScreen(args)
+        val viewModel: VerseDetailViewModel =
+            viewModel(
+                factory = VerseDetailViewModelFactory(
+                    repository, args.book, args.chapter, args.verse
+                )
+            )
+        val bookName by viewModel.bookName.collectAsStateWithLifecycle()
+        val wordList by viewModel.wordList.collectAsStateWithLifecycle()
+
+        VerseDetailScreen(
+            bookName,
+            args.chapter,
+            args.verse,
+            wordList,
+            onHebSortCLick = {viewModel.sortWordsByHebrew()},
+            onEngSortCLick = {viewModel.sortWordsByEnglish()},
+        )
     }
 }
 
 @Composable
-fun VerseDetailScreen(args: VerseDetailScreen) {
-    var wordList by remember { mutableStateOf(getWordList()) }
+fun VerseDetailScreen(
+    bookName: String,
+    chapterNumber: Int,
+    verseNumber: Int,
+    wordList: List<OriginalWord>,
+    onHebSortCLick: () -> Unit = {},
+    onEngSortCLick: () -> Unit = {},
+) {
     var showHtmlInfo by remember { mutableStateOf(false) }
     val bottomBannerHeight = 56.dp
 
@@ -66,7 +95,7 @@ fun VerseDetailScreen(args: VerseDetailScreen) {
         ) {
             Column {
                 TopBanner(
-                    text = "Genesis ${args.chapter}:${args.verse}",
+                    text = "$bookName $chapterNumber:$verseNumber",
                     //onTextCLick = {}
                 )
                 LazyColumn(
@@ -86,12 +115,8 @@ fun VerseDetailScreen(args: VerseDetailScreen) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .height(bottomBannerHeight),
-                onHebSortCLick = {
-                    wordList = wordList.sortedBy { it.hebsort }
-                },
-                onEngSortCLick = {
-                    wordList = wordList.sortedBy { it.engsort }
-                },
+                onHebSortCLick = onHebSortCLick,
+                onEngSortCLick = onEngSortCLick,
             )
             if (showHtmlInfo) {
                 HtmlInfoScreen(
@@ -106,7 +131,7 @@ fun VerseDetailScreen(args: VerseDetailScreen) {
 
 @Composable
 private fun WordItem(
-    word: Word,
+    databaseWord: OriginalWord,
     onItemClick: () -> Unit = {},
 ) {
     Row(
@@ -122,9 +147,9 @@ private fun WordItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(.25f),
         ) {
-            Text(text = word.strongs, style = MaterialTheme.typography.titleSmall)
-            Text(text = word.rootHeb, style = MaterialTheme.typography.bodyMedium)
-            Text(text = word.rootTranslit, style = MaterialTheme.typography.bodyMedium)
+            Text(text = "H${databaseWord.strongsHeb}", style = MaterialTheme.typography.titleSmall)
+            Text(text = "bollsAPI", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "bollsAPI", style = MaterialTheme.typography.bodyMedium)
         }
         VerticalDivider()
         Column(
@@ -133,9 +158,9 @@ private fun WordItem(
                 .weight(.375f)
                 .padding(bottom = 8.dp, top = 8.dp),
         ) {
-            Text(text = word.translit, style = MaterialTheme.typography.titleMedium)
-            Text(text = word.hebrew, style = MaterialTheme.typography.titleSmall)
-            Text(text = word.parsing, style = MaterialTheme.typography.bodySmall)
+            Text(text = databaseWord.transliteration, style = MaterialTheme.typography.titleMedium)
+            Text(text = databaseWord.original, style = MaterialTheme.typography.titleSmall)
+            Text(text = databaseWord.parsingShort, style = MaterialTheme.typography.bodySmall)
         }
         VerticalDivider()
         Column(
@@ -143,13 +168,13 @@ private fun WordItem(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = word.translation,
+                text = databaseWord.translation,
                 style = MaterialTheme.typography.titleMedium,
                 //modifier = Modifier.weight(.5f),
             )
             HorizontalDivider()
             Text(
-                text = "lit. " + word.definition,
+                text = "lit. " + "bollsAPI",
                 style = MaterialTheme.typography.bodyMedium,
                 //modifier = Modifier.weight(.5f),
             )
@@ -231,102 +256,5 @@ private fun BottomBanner(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    HebrewAudioBibleTheme { VerseDetailScreen(VerseDetailScreen(1, 1, 1)) }
-}
-
-/*Placeholder data*/
-data class Word(
-    val strongs: String,
-    val rootHeb: String,
-    val rootTranslit: String,
-    val translit: String,
-    val hebrew: String,
-    val parsing: String,
-    val translation: String,
-    val definition: String,
-    val hebsort: Int,
-    val engsort: Int,
-)
-fun getWordList(): List<Word> {
-    val wordList = listOf<Word>(
-        Word(
-            "H7225",
-            "רֵאשִׁית",
-            "rêʼshîyth",
-            "bə·rê·šîṯ",
-            "ְּרֵאשִׁ֖ית",
-            "Prep-b | N-fs",
-            "In the beginning",
-            "beginning",
-            1, 1,
-        ),
-        Word(
-            "H1254",
-            "בָּרָא",
-            "bârâʼ",
-            "bā·rā",
-            "בָּרָ֣א",
-            "V-Qal-Perf-3ms",
-            "created",
-            "choose",
-            2, 4,
-        ),
-        Word(
-            "H430",
-            "אֱלֹהִים",
-            "ʼĕlôhîym",
-            "’ĕ·lō·hîm",
-            "אֱלֹהִ֑ים",
-            "N-mp",
-            "God",
-            "angels",
-            3, 2,
-        ),
-        Word(
-            "H853",
-            "אֵת",
-            "ʼêth",
-            "’êṯ",
-            "אֵ֥ת",
-            "DirObjM",
-            "-",
-            "self",
-            4, 3,
-        ),
-        Word(
-            "H8064",
-            "שָׁמַיִם",
-            "shâmayim",
-            "haš·šā·ma·yim",
-            "הַשָּׁמַ֖יִם",
-            "Art | N-mp",
-            " the heavens ",
-            "air",
-            5, 5,
-        ),
-        Word(
-            "H853",
-            "אֵת",
-            "ʼêth",
-            "wə·’êṯ",
-            "וְאֵ֥ת",
-            "Conj-w | DirObjM",
-            "and",
-            "self",
-            6, 6,
-        ),
-        Word(
-            "H776",
-            "אֶרֶץ",
-            "ʼerets",
-            "hā·’ā·reṣ",
-            "הָאָֽרֶץ׃",
-            "Art | N-fs",
-            "the earth",
-            "[idiom] common",
-            7, 7,
-        ),
-    )
-
-    return wordList
+    //HebrewAudioBibleTheme { VerseDetailScreen(VerseDetailScreen(1, 1, 1)) }
 }

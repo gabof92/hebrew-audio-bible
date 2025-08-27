@@ -53,7 +53,7 @@ import com.gabof92.hebrewaudiobible.database.Book
 import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
 import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModel
-import com.gabof92.hebrewaudiobible.ui.viewmodel.MovieViewModelFactory
+import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModelFactory
 import kotlinx.serialization.Serializable
 
 
@@ -66,7 +66,7 @@ fun NavGraphBuilder.mainScreenDestination(
 ) {
     composable<MainScreen> {
 
-        val viewModel: MainViewModel = viewModel(factory = MovieViewModelFactory(repository))
+        val viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(repository))
         // Collect the verseList StateFlow as state
         // The UI will recompose whenever verseList in the ViewModel emits a new list
         val verseList by viewModel.verseList.collectAsStateWithLifecycle()

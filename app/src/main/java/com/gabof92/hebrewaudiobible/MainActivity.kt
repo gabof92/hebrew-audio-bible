@@ -36,7 +36,9 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(VerseDetailScreen(book, chapter, verse))
                         },
                     )
-                    verseDetailScreenDestination()
+                    verseDetailScreenDestination(
+                        repository = repository,
+                    )
                 }
             }
         }

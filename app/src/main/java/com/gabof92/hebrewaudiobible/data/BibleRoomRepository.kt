@@ -12,6 +12,9 @@ class BibleRoomRepository(
     val booksDao: BooksDao
 ) {
 
+    suspend fun getVerseWords(book: Int, chapter: Int, verse: Int) =
+        originalWordDao.getOriginalVerse(book, chapter, verse)
+
     suspend fun getBook(bookNumber: Int) = booksDao.getBookByNumber(bookNumber)
 
     suspend fun getVerses(book: Int, chapter: Int): List<VerseText> =

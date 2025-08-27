@@ -48,7 +48,7 @@ class MainViewModel(
 
 }
 
-class MovieViewModelFactory(private val repository: BibleRoomRepository) :
+class MainViewModelFactory(private val repository: BibleRoomRepository) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
