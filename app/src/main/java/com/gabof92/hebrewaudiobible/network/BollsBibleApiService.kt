@@ -36,9 +36,9 @@ private val retrofit = Retrofit.Builder()
 
 interface BollsBibleApiService {
     @GET("dictionary-definition/BDBT/{query}")
-    suspend fun getTranslation(
+    suspend fun getWordDefinitions(
         @Path("query") query: String,
-    ): List<Translation>
+    ): List<RootWord>
 }
 
 object BollsBibleApi {

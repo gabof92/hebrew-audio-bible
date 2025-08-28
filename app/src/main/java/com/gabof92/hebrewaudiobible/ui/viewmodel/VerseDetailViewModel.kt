@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.gabof92.hebrewaudiobible.data.BibleRepository
-import com.gabof92.hebrewaudiobible.database.OriginalWord
+import com.gabof92.hebrewaudiobible.data.WordPair
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,11 +17,11 @@ class VerseDetailViewModel(
     private val verse: Int,
 ) : ViewModel() {
 
-    private val _wordList = MutableStateFlow<List<OriginalWord>>(emptyList())
-    val wordList: StateFlow<List<OriginalWord>> = _wordList.asStateFlow()
-
     private val _bookName = MutableStateFlow<String>("")
     val bookName: StateFlow<String> = _bookName.asStateFlow()
+
+    private val _wordList = MutableStateFlow<List<WordPair>>(emptyList())
+    val wordList: StateFlow<List<WordPair>> = _wordList.asStateFlow()
 
     init {
         loadBook(book)
@@ -36,17 +36,23 @@ class VerseDetailViewModel(
 
     fun loadWords(book: Int, chapter: Int, verse: Int) {
         viewModelScope.launch {
-            val words = repository.getVerseWords(book, chapter, verse)
-            _wordList.value = words
+            val originalWords = repository.getVerseWords(book, chapter, verse)
+            originalWords.forEach { word ->
+                val bestDefinition =
+                    repository.getWordDefinitions("H${word.strongsHeb}")
+                        .maxBy { it.weight }
+                _wordList.value = _wordList.value +
+                        WordPair(word, bestDefinition)
+            }
         }
     }
 
     fun sortWordsByHebrew() {
-        _wordList.value = _wordList.value.sortedBy { it.hebrewSort }
+        _wordList.value = _wordList.value.sortedBy { it.originalWord.hebrewSort }
     }
 
     fun sortWordsByEnglish() {
-        _wordList.value = _wordList.value.sortedBy { it.englishSort }
+        _wordList.value = _wordList.value.sortedBy { it.originalWord.englishSort }
     }
 }
 

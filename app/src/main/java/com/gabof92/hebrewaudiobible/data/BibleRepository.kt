@@ -16,7 +16,7 @@ class BibleRepository(
     suspend fun getVerses(book: Int, chapter: Int) =
         localDataSource.getVerses(book, chapter)
 
-    suspend fun getWordDefinition(query: String) =
-        remoteDataSource.getTranslation(query)
+    suspend fun getWordDefinitions(query: String) =
+        remoteDataSource.getWordDefinitions(query)
 
 }
