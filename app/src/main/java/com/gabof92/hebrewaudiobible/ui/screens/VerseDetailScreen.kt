@@ -37,7 +37,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.gabof92.hebrewaudiobible.data.BibleRepository
-import com.gabof92.hebrewaudiobible.database.OriginalWord
+import com.gabof92.hebrewaudiobible.data.WordPair
+import com.gabof92.hebrewaudiobible.network.RootWord
 import com.gabof92.hebrewaudiobible.ui.WordDetailScreen
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
@@ -64,7 +65,7 @@ fun NavGraphBuilder.verseDetailScreenDestination(
         val bookName by viewModel.bookName.collectAsStateWithLifecycle()
         val wordList by viewModel.wordList.collectAsStateWithLifecycle()
 
-        VerseDetailScreen(
+        VerseDetailScreenContent(
             bookName,
             args.chapter,
             args.verse,
@@ -76,15 +77,15 @@ fun NavGraphBuilder.verseDetailScreenDestination(
 }
 
 @Composable
-fun VerseDetailScreen(
+fun VerseDetailScreenContent(
     bookName: String,
     chapterNumber: Int,
     verseNumber: Int,
-    wordList: List<OriginalWord>,
+    wordList: List<WordPair>,
     onHebSortCLick: () -> Unit = {},
     onEngSortCLick: () -> Unit = {},
 ) {
-    var showHtmlInfo by remember { mutableStateOf(false) }
+    var selectedWord by remember { mutableStateOf<RootWord?>(null) }
     val bottomBannerHeight = 56.dp
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -106,7 +107,7 @@ fun VerseDetailScreen(
                     items(wordList) { word ->
                         WordItem(
                             word,
-                            onItemClick = { showHtmlInfo = true }
+                            onItemClick = { selectedWord = word.rootWord }
                         )
                     }
                 }
@@ -118,11 +119,10 @@ fun VerseDetailScreen(
                 onHebSortCLick = onHebSortCLick,
                 onEngSortCLick = onEngSortCLick,
             )
-            if (showHtmlInfo) {
+            selectedWord?.let {
                 WordDetailScreen(
-                    "H7225",
-                    htmlContent = "Original: \u003Cb\u003E\u003Che\u003Eראשׁית\u003C/he\u003E\u003C/b\u003E \u003Cp /\u003ETransliteration: \u003Cb\u003Erêshı̂yth\u003C/b\u003E \u003Cp /\u003EPhonetic: \u003Cb\u003Eray-sheeth\u003C/b\u003E \u003Cp class=\"bdb_def\"\u003E\u003Cb\u003EBDB Definition\u003C/b\u003E:\u003C/p\u003E\u003Col\u003E\u003Cli\u003Efirst, beginning, best, chief\u003Col type=a\u003E\u003Cli\u003Ebeginning\u003C/li\u003E\u003Cli\u003Efirst\u003C/li\u003E\u003Cli\u003Echief\u003C/li\u003E\u003Cli\u003Echoice part\u003C/li\u003E\u003C/ol\u003E\u003C/li\u003E\u003C/ol\u003E \u003Cp /\u003EOrigin: from the same as \u003Ca href=S:H7218\u003EH7218\u003C/a\u003E \u003Cp /\u003ETWOT entry: \u003Ca class=\"T\" href=\"S:2097 - rosh\"\u003E2097e\u003C/a\u003E \u003Cp /\u003EPart(s) of speech: Noun Feminine ",
-                    onDismissRequest = { showHtmlInfo = false }
+                    word = it,
+                    onDismissRequest = { selectedWord = null }
                 )
             }
         }
@@ -131,7 +131,7 @@ fun VerseDetailScreen(
 
 @Composable
 private fun WordItem(
-    databaseWord: OriginalWord,
+    word: WordPair,
     onItemClick: () -> Unit = {},
 ) {
     Row(
@@ -147,9 +147,9 @@ private fun WordItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(.25f),
         ) {
-            Text(text = "H${databaseWord.strongsHeb}", style = MaterialTheme.typography.titleSmall)
-            Text(text = "bollsAPI", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "bollsAPI", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "H${word.originalWord.strongsHeb}", style = MaterialTheme.typography.titleSmall)
+            Text(text = word.rootWord.hebrewWord, style = MaterialTheme.typography.bodyMedium)
+            Text(text = word.rootWord.transliteration, style = MaterialTheme.typography.bodyMedium)
         }
         VerticalDivider()
         Column(
@@ -158,9 +158,9 @@ private fun WordItem(
                 .weight(.375f)
                 .padding(bottom = 8.dp, top = 8.dp),
         ) {
-            Text(text = databaseWord.transliteration, style = MaterialTheme.typography.titleMedium)
-            Text(text = databaseWord.original, style = MaterialTheme.typography.titleSmall)
-            Text(text = databaseWord.parsingShort, style = MaterialTheme.typography.bodySmall)
+            Text(text = word.originalWord.transliteration, style = MaterialTheme.typography.titleMedium)
+            Text(text = word.originalWord.original, style = MaterialTheme.typography.titleSmall)
+            Text(text = word.originalWord.parsingShort, style = MaterialTheme.typography.bodySmall)
         }
         VerticalDivider()
         Column(
@@ -168,13 +168,13 @@ private fun WordItem(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = databaseWord.translation,
+                text = word.originalWord.translation,
                 style = MaterialTheme.typography.titleMedium,
                 //modifier = Modifier.weight(.5f),
             )
             HorizontalDivider()
             Text(
-                text = "lit. " + "bollsAPI",
+                text = "(${word.rootWord.shortDefinition})",
                 style = MaterialTheme.typography.bodyMedium,
                 //modifier = Modifier.weight(.5f),
             )

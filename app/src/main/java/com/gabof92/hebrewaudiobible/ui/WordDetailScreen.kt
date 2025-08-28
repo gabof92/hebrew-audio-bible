@@ -31,12 +31,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.gabof92.hebrewaudiobible.network.RootWord
 
 
 @Composable
 fun WordDetailScreen(
-    title: String,
-    htmlContent: String,
+    word: RootWord,
     onDismissRequest: () -> Unit // You'll still need a way to "close" it
 ) {
     // This Box will act as the overlay/scrim
@@ -59,7 +59,7 @@ fun WordDetailScreen(
                     .padding(16.dp) // Padding inside the card
             ) {
                 Text(
-                    text = "Root Word (${title})",
+                    text = "Root Word (${word.strong})",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Bold
@@ -69,7 +69,7 @@ fun WordDetailScreen(
 
                 // Composable to display HTML
                 HtmlText(
-                    html = htmlContent.convertStrongsLinks(),
+                    html = word.longDefinition.convertStrongsLinks(),
                     modifier = Modifier.weight(
                         1f,
                         fill = false
@@ -122,11 +122,11 @@ fun HtmlText(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    WordDetailScreen(
+    /*WordDetailScreen(
         "H7225",
         htmlContent = "Original: \u003Cb\u003E\u003Che\u003Eראשׁית\u003C/he\u003E\u003C/b\u003E \u003Cp /\u003ETransliteration: \u003Cb\u003Erêshı̂yth\u003C/b\u003E \u003Cp /\u003EPhonetic: \u003Cb\u003Eray-sheeth\u003C/b\u003E \u003Cp class=\"bdb_def\"\u003E\u003Cb\u003EBDB Definition\u003C/b\u003E:\u003C/p\u003E\u003Col\u003E\u003Cli\u003Efirst, beginning, best, chief\u003Col type=a\u003E\u003Cli\u003Ebeginning\u003C/li\u003E\u003Cli\u003Efirst\u003C/li\u003E\u003Cli\u003Echief\u003C/li\u003E\u003Cli\u003Echoice part\u003C/li\u003E\u003C/ol\u003E\u003C/li\u003E\u003C/ol\u003E \u003Cp /\u003EOrigin: from the same as \u003Ca href=S:H7218\u003EH7218\u003C/a\u003E \u003Cp /\u003ETWOT entry: \u003Ca class=\"T\" href=\"S:2097 - rosh\"\u003E2097e\u003C/a\u003E \u003Cp /\u003EPart(s) of speech: Noun Feminine ",
         onDismissRequest = { }
-    )
+    )*/
 }
 
 fun String.convertStrongsLinks(): String {
