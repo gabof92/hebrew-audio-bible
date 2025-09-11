@@ -9,10 +9,14 @@ data class VerseTimestamp(
     @PrimaryKey
     val id: Int,
 
+    @ColumnInfo(name = "book")
+    val book :Int,
+    @ColumnInfo(name = "chapter")
+    val chapter :Int,
     @ColumnInfo(name = "verse")
     val verse :Int,
-    @ColumnInfo(name = "audio_source")
-    val source :Int,
+    @ColumnInfo(name = "audio_collection")
+    val collection :String,
     @ColumnInfo(name = "milliseconds")
     val millis :Int,
 )

@@ -1,4 +1,4 @@
-package com.gabof92.hebrewaudiobible.ui
+package com.gabof92.hebrewaudiobible.ui.screens
 
 import android.text.Html
 import android.text.method.LinkMovementMethod

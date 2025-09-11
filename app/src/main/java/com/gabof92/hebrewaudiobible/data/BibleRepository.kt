@@ -19,4 +19,9 @@ class BibleRepository(
     suspend fun getWordDefinitions(query: String) =
         remoteDataSource.getWordDefinitions(query)
 
+    suspend fun getChapterAudioUrl(book: Int, chapter: Int) =
+        localDataSource.getChapterAudioUrl(book, chapter)
+
+    suspend fun getChapterTimestamps(book: Int, chapter: Int) =
+        localDataSource.getChapterTimestamps(book, chapter)
 }

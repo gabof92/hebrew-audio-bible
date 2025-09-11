@@ -12,7 +12,7 @@ data class AudioSource(
     @ColumnInfo(name = "book")
     val book :Int,
     @ColumnInfo(name = "chapter")
-    val verse :Int,
+    val chapter :Int,
     @ColumnInfo(name = "collection")
     val collection :String,
     @ColumnInfo(name = "url")
