@@ -39,7 +39,6 @@ import androidx.navigation.toRoute
 import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.WordPair
 import com.gabof92.hebrewaudiobible.network.RootWord
-import com.gabof92.hebrewaudiobible.ui.WordDetailScreen
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
 import kotlinx.serialization.Serializable
@@ -70,8 +69,8 @@ fun NavGraphBuilder.verseDetailScreenDestination(
             args.chapter,
             args.verse,
             wordList,
-            onHebSortCLick = {viewModel.sortWordsByHebrew()},
-            onEngSortCLick = {viewModel.sortWordsByEnglish()},
+            onHebSortCLick = { viewModel.sortWordsByHebrew() },
+            onEngSortCLick = { viewModel.sortWordsByEnglish() },
         )
     }
 }
@@ -147,7 +146,10 @@ private fun WordItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(.25f),
         ) {
-            Text(text = "H${word.originalWord.strongsHeb}", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "H${word.originalWord.strongsHeb}",
+                style = MaterialTheme.typography.titleSmall
+            )
             Text(text = word.rootWord.hebrewWord, style = MaterialTheme.typography.bodyMedium)
             Text(text = word.rootWord.transliteration, style = MaterialTheme.typography.bodyMedium)
         }
@@ -158,7 +160,10 @@ private fun WordItem(
                 .weight(.375f)
                 .padding(bottom = 8.dp, top = 8.dp),
         ) {
-            Text(text = word.originalWord.transliteration, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = word.originalWord.transliteration,
+                style = MaterialTheme.typography.titleMedium
+            )
             Text(text = word.originalWord.original, style = MaterialTheme.typography.titleSmall)
             Text(text = word.originalWord.parsingShort, style = MaterialTheme.typography.bodySmall)
         }
@@ -172,12 +177,12 @@ private fun WordItem(
                 style = MaterialTheme.typography.titleMedium,
                 //modifier = Modifier.weight(.5f),
             )
-            HorizontalDivider()
+            /*HorizontalDivider()
             Text(
                 text = "(${word.rootWord.shortDefinition})",
                 style = MaterialTheme.typography.bodyMedium,
                 //modifier = Modifier.weight(.5f),
-            )
+            )*/
         }
     }
     HorizontalDivider(

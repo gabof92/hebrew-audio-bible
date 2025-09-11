@@ -11,4 +11,8 @@ interface AudioSourceDao {
     @Query("SELECT * FROM audio_sources " +
             "WHERE BOOK=:book AND CHAPTER=:chapter")
     suspend fun getChapterAudio(book: Int, chapter: Int): AudioSource
+
+    @Query("SELECT url FROM audio_sources " +
+            "WHERE BOOK=:book AND CHAPTER=:chapter")
+    suspend fun getChapterAudioUrl(book: Int, chapter: Int): String
 }

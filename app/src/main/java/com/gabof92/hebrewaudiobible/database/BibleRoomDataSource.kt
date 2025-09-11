@@ -15,4 +15,10 @@ class BibleRoomDataSource(
 
     suspend fun getVerses(book: Int, chapter: Int): List<VerseText> =
         originalWordDao.getVerseTexts(book, chapter)
+
+    suspend fun getChapterAudioUrl(book: Int, chapter: Int) =
+        audioSourceDao.getChapterAudioUrl(book, chapter)
+
+    suspend fun getChapterTimestamps(book: Int, chapter: Int) =
+        verseTimestampDao.getChapterTimestamps(book, chapter)
 }

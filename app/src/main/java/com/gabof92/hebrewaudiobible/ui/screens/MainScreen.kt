@@ -1,6 +1,5 @@
 package com.gabof92.hebrewaudiobible.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +15,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.DropdownMenu
@@ -33,13 +34,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,6 +56,7 @@ import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
 import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModelFactory
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 
@@ -67,23 +70,33 @@ fun NavGraphBuilder.mainScreenDestination(
     composable<MainScreen> {
 
         val viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(repository))
-        // Collect the verseList StateFlow as state
-        // The UI will recompose whenever verseList in the ViewModel emits a new list
-        val verseList by viewModel.verseList.collectAsStateWithLifecycle()
-        val currentChapter by viewModel.currentChapter.collectAsStateWithLifecycle()
-        val currentBook by viewModel.currentBook.collectAsStateWithLifecycle()
-        // You might also want to collect currentBook if it's dynamic
 
-        // Initially, verseList will be emptyList() (or your initial StateFlow value)
-        // and will update once loadVerses() in the ViewModel completes.
+        val currentBook by viewModel.currentBook.collectAsStateWithLifecycle()
+        val currentChapter by viewModel.currentChapter.collectAsStateWithLifecycle()
+        val verseList by viewModel.verseList.collectAsStateWithLifecycle()
+        val isAudioPlaying by viewModel.isAudioPlaying.collectAsStateWithLifecycle()
+        val currentAudioVerse by viewModel.currentAudioVerse.collectAsStateWithLifecycle()
+
         MainScreen(
             verseList = verseList,
             book = currentBook,
             chapter = currentChapter,
+            isAudioPlaying = isAudioPlaying,
+            currentAudioVerse = currentAudioVerse,
             onNavigateToVerseDetail = onNavigateToVerseDetail,
-            onChapterChange = { newChapter -> // Add a callback for chapter changes
+            onChapterChange = { newChapter ->
                 viewModel.loadVerses(viewModel.currentBook.value.number, newChapter)
-            }
+            },
+            onVerseClick = { verseNumber ->
+                viewModel.seekAudioByVerse(verseNumber)
+            },
+            onTogglePlay = {
+                if (isAudioPlaying) viewModel.pauseAudio()
+                else viewModel.playAudio()
+            },
+            onRestartAudio = {
+                viewModel.seekAudio(0)
+            },
         )
     }
 }
@@ -94,16 +107,31 @@ fun MainScreen(
     book: Book,
     chapter: Int,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit,
-    onChapterChange: (Int) -> Unit // Callback to inform ViewModel of chapter change
+    onChapterChange: (Int) -> Unit,
+    onTogglePlay: () -> Unit,
+    onRestartAudio: () -> Unit,
+    isAudioPlaying: Boolean,
+    onVerseClick: (Int) -> Unit = {},
+    currentAudioVerse: Int,
 ) {
 
-    val context = LocalContext.current
     var showHebrewText by remember { mutableStateOf(true) }
     var showTransliteration by remember { mutableStateOf(true) }
     var showEnglishText by remember { mutableStateOf(true) }
     val bottomBannerHeight = 56.dp
     var showChapterSelector by remember { mutableStateOf(false) }
 
+    // Scroll to the item when currentAudioVerse changes
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(currentAudioVerse) {
+        if (currentAudioVerse > 0 && currentAudioVerse <= verseList.size) {
+            val indexToScroll = currentAudioVerse - 1
+            coroutineScope.launch {
+                listState.animateScrollToItem(index = indexToScroll)
+            }
+        }
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(
@@ -128,10 +156,11 @@ fun MainScreen(
                 )
 
                 LazyColumn(
+                    state = listState,
                     contentPadding = PaddingValues(bottom = bottomBannerHeight),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .weight(1f),
                 ) {
                     items(verseList) { verse ->
                         VerseListItem(
@@ -142,16 +171,11 @@ fun MainScreen(
                             hebrewText = verse.hebrew,
                             transliteration = verse.transliteration,
                             englishText = verse.translation,
-                            onItemClick = {
-                                Toast.makeText(
-                                    context,
-                                    "play audio verse: ${verse.verse}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
+                            onItemClick = { onVerseClick(verse.verse) },
                             onItemLongClick = {
                                 onNavigateToVerseDetail(book.number, chapter, verse.verse)
-                            }
+                            },
+                            currentAudioVerse = currentAudioVerse
                         )
                     }
                 }
@@ -169,6 +193,9 @@ fun MainScreen(
                     showTransliteration = !showTransliteration
                 },
                 onToggleEnglishClick = { showEnglishText = !showEnglishText },
+                onTogglePlayClick = onTogglePlay,
+                isAudioPlaying = isAudioPlaying,
+                onRestartClick = onRestartAudio
             )
 
             if (showChapterSelector) {
@@ -202,10 +229,17 @@ fun VerseListItem(
     englishText: String = "",
     onItemClick: () -> Unit,
     onItemLongClick: () -> Unit,
+    currentAudioVerse: Int,
 ) {
+    val backgroundColor =
+        if (currentAudioVerse == verseNumber)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.background
     Row(
         modifier
             .fillMaxWidth()
+            .background(backgroundColor)
             .padding(start = 16.dp, bottom = 8.dp, top = 8.dp, end = 16.dp)
             .combinedClickable(
                 onClick = { onItemClick() },
@@ -307,8 +341,9 @@ private fun BottomBanner(
     onToggleHebrewClick: () -> Unit = {},
     onToggleTransClick: () -> Unit = {},
     onToggleEnglishClick: () -> Unit = {},
-    onRestartCLick: () -> Unit = {},
+    onRestartClick: () -> Unit = {},
     onTogglePlayClick: () -> Unit = {},
+    isAudioPlaying: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
@@ -322,7 +357,7 @@ private fun BottomBanner(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f) // Each Box gets equal weight
-                .combinedClickable(onClick = onRestartCLick)
+                .combinedClickable(onClick = onRestartClick)
                 .minimumInteractiveComponentSize(),
             contentAlignment = Alignment.Center // Center the icon within this Box
         ) {
@@ -342,7 +377,8 @@ private fun BottomBanner(
             contentAlignment = Alignment.Center // Center the icon within this Box
         ) {
             Icon(
-                imageVector = Icons.Default.PlayArrow,
+                imageVector =
+                    if (isAudioPlaying) Icons.Filled.Pause else Icons.Default.PlayArrow,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier

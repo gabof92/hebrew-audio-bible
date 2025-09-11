@@ -9,7 +9,7 @@ interface VerseTimestampDao {
     suspend fun getTimestampById (id: Int): VerseTimestamp
 
     @Query("SELECT * FROM verse_timestamps " +
-            "WHERE audio_source=:audioSource " +
+            "WHERE BOOK=:book AND CHAPTER=:chapter " +
             "ORDER BY milliseconds ASC")
-    suspend fun getChapterTimestamps(audioSource: Int): List<VerseTimestamp>
+    suspend fun getChapterTimestamps(book: Int, chapter: Int): List<VerseTimestamp>
 }
