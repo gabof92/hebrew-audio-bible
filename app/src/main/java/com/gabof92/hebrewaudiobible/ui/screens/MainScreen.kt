@@ -51,9 +51,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.VerseText
-import com.gabof92.hebrewaudiobible.database.Book
 import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
+import com.gabof92.hebrewaudiobible.ui.viewmodel.MainUiState
 import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.MainViewModelFactory
 import kotlinx.coroutines.launch
@@ -63,6 +63,38 @@ import kotlinx.serialization.Serializable
 @Serializable
 object MainScreen
 
+class MainScreenState() {
+    var showHebrewText by mutableStateOf(true)
+    var showTransliteration by mutableStateOf(true)
+    var showEnglishText by mutableStateOf(true)
+    var showChapterSelector by mutableStateOf(false)
+
+    fun toggleHebrewText() {
+        showHebrewText = !showHebrewText
+    }
+
+    fun toggleTransliteration() {
+        showTransliteration = !showTransliteration
+    }
+
+    fun toggleEnglishText() {
+        showEnglishText = !showEnglishText
+    }
+
+    fun openChapterSelector() {
+        showChapterSelector = true
+    }
+
+    fun dismissChapterSelector() {
+        showChapterSelector = false
+    }
+}
+
+@Composable
+fun rememberMainScreenState(): MainScreenState {
+    return remember { MainScreenState() }
+}
+
 fun NavGraphBuilder.mainScreenDestination(
     repository: BibleRepository,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit
@@ -71,64 +103,42 @@ fun NavGraphBuilder.mainScreenDestination(
 
         val viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(repository))
 
-        val currentBook by viewModel.currentBook.collectAsStateWithLifecycle()
-        val currentChapter by viewModel.currentChapter.collectAsStateWithLifecycle()
-        val verseList by viewModel.verseList.collectAsStateWithLifecycle()
-        val isAudioPlaying by viewModel.isAudioPlaying.collectAsStateWithLifecycle()
-        val currentAudioVerse by viewModel.currentAudioVerse.collectAsStateWithLifecycle()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         MainScreen(
-            verseList = verseList,
-            book = currentBook,
-            chapter = currentChapter,
-            isAudioPlaying = isAudioPlaying,
-            currentAudioVerse = currentAudioVerse,
+            uiState = uiState,
             onNavigateToVerseDetail = onNavigateToVerseDetail,
             onChapterChange = { newChapter ->
-                viewModel.loadVerses(viewModel.currentBook.value.number, newChapter)
+                viewModel.loadVerses(chapter = newChapter)
             },
-            onVerseClick = { verseNumber ->
-                viewModel.seekAudioByVerse(verseNumber)
-            },
-            onTogglePlay = {
-                if (isAudioPlaying) viewModel.pauseAudio()
-                else viewModel.playAudio()
-            },
-            onRestartAudio = {
-                viewModel.seekAudio(0)
-            },
+            onVerseClick = { verseNumber -> viewModel.seekAudioByVerse(verseNumber) },
+            onTogglePlay = { viewModel.togglePlay() },
+            onRestartAudio = { viewModel.seekAudio(0) },
         )
     }
 }
 
 @Composable
 fun MainScreen(
-    verseList: List<VerseText>,
-    book: Book,
-    chapter: Int,
+    screenState: MainScreenState = rememberMainScreenState(),
+    uiState: MainUiState,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit,
     onChapterChange: (Int) -> Unit,
     onTogglePlay: () -> Unit,
     onRestartAudio: () -> Unit,
-    isAudioPlaying: Boolean,
     onVerseClick: (Int) -> Unit = {},
-    currentAudioVerse: Int,
 ) {
 
-    var showHebrewText by remember { mutableStateOf(true) }
-    var showTransliteration by remember { mutableStateOf(true) }
-    var showEnglishText by remember { mutableStateOf(true) }
     val bottomBannerHeight = 56.dp
-    var showChapterSelector by remember { mutableStateOf(false) }
 
     // Scroll to the item when currentAudioVerse changes
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(currentAudioVerse) {
-        if (currentAudioVerse > 0 && currentAudioVerse <= verseList.size) {
-            val indexToScroll = currentAudioVerse - 1
+    LaunchedEffect(uiState.currentAudioVerse) {
+        if (uiState.currentAudioVerse > 0 && uiState.currentAudioVerse <= uiState.verses.size) {
+            val targetVerseIndex = uiState.currentAudioVerse - 1
             coroutineScope.launch {
-                listState.animateScrollToItem(index = indexToScroll)
+                listState.animateScrollToItem(index = targetVerseIndex)
             }
         }
     }
@@ -141,16 +151,16 @@ fun MainScreen(
         ) {
             Column {
                 TopBanner(
-                    text = "${book.name} $chapter",
+                    text = "${uiState.book.name} ${uiState.chapter}",
                     onLeftCLick = {
-                        val previousChapter = chapter - 1
+                        val previousChapter = uiState.chapter - 1
                         if (previousChapter >= 1)
                             onChapterChange(previousChapter)
                     },
-                    onTextCLick = { showChapterSelector = true },
+                    onTextCLick = screenState::openChapterSelector,
                     onRightClick = {
-                        val nextChapter = chapter + 1
-                        if (nextChapter <= book.chapters)
+                        val nextChapter = uiState.chapter + 1
+                        if (nextChapter <= uiState.book.chapters)
                             onChapterChange(nextChapter)
                     }
                 )
@@ -162,20 +172,21 @@ fun MainScreen(
                         .fillMaxWidth()
                         .weight(1f),
                 ) {
-                    items(verseList) { verse ->
+                    items(uiState.verses) { verse ->
                         VerseListItem(
-                            verseNumber = verse.verse,
-                            showHebrewText = showHebrewText,
-                            showTransliteration = showTransliteration,
-                            showEnglishText = showEnglishText,
-                            hebrewText = verse.hebrew,
-                            transliteration = verse.transliteration,
-                            englishText = verse.translation,
+                            verse = verse,
+                            showHebrewText = screenState.showHebrewText,
+                            showTransliteration = screenState.showTransliteration,
+                            showEnglishText = screenState.showEnglishText,
                             onItemClick = { onVerseClick(verse.verse) },
                             onItemLongClick = {
-                                onNavigateToVerseDetail(book.number, chapter, verse.verse)
+                                onNavigateToVerseDetail(
+                                    uiState.book.number,
+                                    uiState.chapter,
+                                    verse.verse
+                                )
                             },
-                            currentAudioVerse = currentAudioVerse
+                            currentAudioVerse = uiState.currentAudioVerse
                         )
                     }
                 }
@@ -185,54 +196,36 @@ fun MainScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .height(bottomBannerHeight),
-                showHebrewText = showHebrewText,
-                showTransliteration = showTransliteration,
-                showEnglishText = showEnglishText,
-                onToggleHebrewClick = { showHebrewText = !showHebrewText },
-                onToggleTransClick = {
-                    showTransliteration = !showTransliteration
-                },
-                onToggleEnglishClick = { showEnglishText = !showEnglishText },
+                screenState = screenState,
                 onTogglePlayClick = onTogglePlay,
-                isAudioPlaying = isAudioPlaying,
+                isAudioPlaying = uiState.isAudioPlaying,
                 onRestartClick = onRestartAudio
             )
 
-            if (showChapterSelector) {
+            if (screenState.showChapterSelector) {
                 ChapterSelectorDialog(
-                    chapters = book.chapters,
+                    chapters = uiState.book.chapters,
                     onChapterSelected = onChapterChange,
-                    onDismissRequest = { showChapterSelector = false }
+                    onDismissRequest = screenState::dismissChapterSelector
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun Preview() {
-    HebrewAudioBibleTheme {
-        //MainScreen(onNavigateToVerseDetail = { _, _, _ -> })
-    }
-}
-
 @Composable
 fun VerseListItem(
     modifier: Modifier = Modifier,
-    verseNumber: Int,
+    verse: VerseText,
     showHebrewText: Boolean = true,
     showTransliteration: Boolean = true,
     showEnglishText: Boolean = true,
-    hebrewText: String = "",
-    transliteration: String = "",
-    englishText: String = "",
     onItemClick: () -> Unit,
     onItemLongClick: () -> Unit,
     currentAudioVerse: Int,
 ) {
     val backgroundColor =
-        if (currentAudioVerse == verseNumber)
+        if (currentAudioVerse == verse.verse)
             MaterialTheme.colorScheme.primaryContainer
         else
             MaterialTheme.colorScheme.background
@@ -248,21 +241,21 @@ fun VerseListItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = verseNumber.toString(),
+            text = verse.verse.toString(),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(end = 16.dp)
         )
         Column {
             if (showHebrewText) Text(
-                text = hebrewText,
+                text = verse.hebrew,
                 style = MaterialTheme.typography.titleMedium
             )
             if (showTransliteration) Text(
-                text = transliteration,
+                text = verse.transliteration,
                 style = MaterialTheme.typography.titleMedium
             )
             if (showEnglishText) Text(
-                text = englishText,
+                text = verse.translation,
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -335,17 +328,12 @@ private fun TopBanner(
 @Composable
 private fun BottomBanner(
     modifier: Modifier = Modifier,
-    showHebrewText: Boolean = true,
-    showTransliteration: Boolean = true,
-    showEnglishText: Boolean = true,
-    onToggleHebrewClick: () -> Unit = {},
-    onToggleTransClick: () -> Unit = {},
-    onToggleEnglishClick: () -> Unit = {},
-    onRestartClick: () -> Unit = {},
-    onTogglePlayClick: () -> Unit = {},
-    isAudioPlaying: Boolean = false,
+    screenState: MainScreenState,
+    isAudioPlaying: Boolean,
+    onTogglePlayClick: () -> Unit,
+    onRestartClick: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expandMenu by remember { mutableStateOf(false) }
     Row(
         modifier = modifier
             //.height(IntrinsicSize.Min)
@@ -353,6 +341,7 @@ private fun BottomBanner(
             .background(MaterialTheme.colorScheme.primaryContainer),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // Restart Button
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -368,6 +357,7 @@ private fun BottomBanner(
                 modifier = Modifier
             )
         }
+        // Play Button
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -384,11 +374,12 @@ private fun BottomBanner(
                 modifier = Modifier
             )
         }
+        // Dropdown Menu
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f) // Each Box gets equal weight
-                .combinedClickable(onClick = { expanded = !expanded })
+                .combinedClickable(onClick = { expandMenu = !expandMenu })
                 .minimumInteractiveComponentSize(),
             contentAlignment = Alignment.Center // Center the icon within this Box
         ) {
@@ -399,42 +390,55 @@ private fun BottomBanner(
                 modifier = Modifier
             )
             DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = expandMenu,
+                onDismissRequest = { expandMenu = false }
             ) {
                 DropdownMenuItem(
                     text = { Text("Hebrew Text") },
                     trailingIcon = {
                         Icon(
-                            imageVector = if (showHebrewText) Icons.Default.Check else Icons.Default.Close,
+                            imageVector =
+                                if (screenState.showHebrewText) Icons.Default.Check
+                                else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = onToggleHebrewClick,
+                    onClick = screenState::toggleHebrewText,
                 )
                 HorizontalDivider()
                 DropdownMenuItem(
                     text = { Text("Transliteration") },
                     trailingIcon = {
                         Icon(
-                            imageVector = if (showTransliteration) Icons.Default.Check else Icons.Default.Close,
+                            imageVector =
+                                if (screenState.showTransliteration)
+                                    Icons.Default.Check
+                                else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = onToggleTransClick,
+                    onClick = screenState::toggleTransliteration,
                 )
                 HorizontalDivider()
                 DropdownMenuItem(
                     text = { Text("English Text") },
                     trailingIcon = {
                         Icon(
-                            imageVector = if (showEnglishText) Icons.Default.Check else Icons.Default.Close,
+                            imageVector = if (screenState.showEnglishText) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = onToggleEnglishClick,
+                    onClick = screenState::toggleEnglishText,
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+    HebrewAudioBibleTheme {
+        //MainScreen(onNavigateToVerseDetail = { _, _, _ -> })
     }
 }

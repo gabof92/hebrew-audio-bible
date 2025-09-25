@@ -5,54 +5,82 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.WordPair
+import com.gabof92.hebrewaudiobible.database.Book
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class DetailUiState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val book: Book? = null,
+    val chapter: Int,
+    val verse: Int,
+    val wordList: List<WordPair> = emptyList(),
+)
 
 class VerseDetailViewModel(
     private val repository: BibleRepository,
-    private val book: Int,
-    private val chapter: Int,
-    private val verse: Int,
+    book: Int,
+    chapter: Int,
+    verse: Int,
 ) : ViewModel() {
 
-    private val _bookName = MutableStateFlow<String>("")
-    val bookName: StateFlow<String> = _bookName.asStateFlow()
-
-    private val _wordList = MutableStateFlow<List<WordPair>>(emptyList())
-    val wordList: StateFlow<List<WordPair>> = _wordList.asStateFlow()
+    private val _uiState = MutableStateFlow(
+        DetailUiState(
+            chapter = chapter,
+            verse = verse,
+        )
+    )
+    val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
 
     init {
-        loadBook(book)
-        loadWords(book, chapter, verse)
+        loadData(book, chapter, verse)
     }
 
-    private fun loadBook(bookNumber: Int) {
+    fun loadData(bookNumber: Int, chapter: Int, verse: Int) {
         viewModelScope.launch {
-            _bookName.value = repository.getBook(bookNumber).name
-        }
-    }
-
-    fun loadWords(book: Int, chapter: Int, verse: Int) {
-        viewModelScope.launch {
-            val originalWords = repository.getVerseWords(book, chapter, verse)
-            originalWords.forEach { word ->
-                val bestDefinition =
-                    repository.getWordDefinitions("H${word.strongsHeb}")
-                        .maxBy { it.weight }
-                _wordList.value = _wordList.value +
-                        WordPair(word, bestDefinition)
+            _uiState.value.copy(isLoading = true)
+            try {
+                val book = repository.getBook(bookNumber)
+                val originalWords = repository.getVerseWords(bookNumber, chapter, verse)
+                val wordPairs = mutableListOf<WordPair>()
+                originalWords.forEach { word ->
+                    val bestDefinition =
+                        repository.getWordDefinitions("H${word.strongsHeb}")
+                            .maxBy { it.weight }
+                    wordPairs.add(WordPair(word, bestDefinition))
+                }
+                _uiState.update {
+                    it.copy(
+                        book = book,
+                        chapter = chapter,
+                        verse = verse,
+                        wordList = wordPairs,
+                        isLoading = false,
+                    )
+                }
+            } catch (_: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Failed to load data"
+                    )
+                }
             }
         }
     }
 
     fun sortWordsByHebrew() {
-        _wordList.value = _wordList.value.sortedBy { it.originalWord.hebrewSort }
+        val sortedList = uiState.value.wordList.sortedBy { it.originalWord.hebrewSort }
+        _uiState.update { it.copy(wordList = sortedList) }
     }
 
     fun sortWordsByEnglish() {
-        _wordList.value = _wordList.value.sortedBy { it.originalWord.englishSort }
+        val sortedList = uiState.value.wordList.sortedBy { it.originalWord.englishSort }
+        _uiState.update { it.copy(wordList = sortedList) }
     }
 }
 

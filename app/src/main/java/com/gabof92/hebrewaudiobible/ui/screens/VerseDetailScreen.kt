@@ -39,6 +39,7 @@ import androidx.navigation.toRoute
 import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.WordPair
 import com.gabof92.hebrewaudiobible.network.RootWord
+import com.gabof92.hebrewaudiobible.ui.viewmodel.DetailUiState
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
 import kotlinx.serialization.Serializable
@@ -61,14 +62,10 @@ fun NavGraphBuilder.verseDetailScreenDestination(
                     repository, args.book, args.chapter, args.verse
                 )
             )
-        val bookName by viewModel.bookName.collectAsStateWithLifecycle()
-        val wordList by viewModel.wordList.collectAsStateWithLifecycle()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         VerseDetailScreenContent(
-            bookName,
-            args.chapter,
-            args.verse,
-            wordList,
+            uiState = uiState,
             onHebSortCLick = { viewModel.sortWordsByHebrew() },
             onEngSortCLick = { viewModel.sortWordsByEnglish() },
         )
@@ -77,10 +74,7 @@ fun NavGraphBuilder.verseDetailScreenDestination(
 
 @Composable
 fun VerseDetailScreenContent(
-    bookName: String,
-    chapterNumber: Int,
-    verseNumber: Int,
-    wordList: List<WordPair>,
+    uiState: DetailUiState,
     onHebSortCLick: () -> Unit = {},
     onEngSortCLick: () -> Unit = {},
 ) {
@@ -95,7 +89,11 @@ fun VerseDetailScreenContent(
         ) {
             Column {
                 TopBanner(
-                    text = "$bookName $chapterNumber:$verseNumber",
+
+                    text =
+                        if (uiState.book != null)
+                            "${uiState.book.name} ${uiState.chapter}:${uiState.verse}"
+                        else "Loading...",
                     //onTextCLick = {}
                 )
                 LazyColumn(
@@ -103,7 +101,7 @@ fun VerseDetailScreenContent(
                     modifier = Modifier.weight(1f)
                 ) {
 
-                    items(wordList) { word ->
+                    items(uiState.wordList) { word ->
                         WordItem(
                             word,
                             onItemClick = { selectedWord = word.rootWord }
