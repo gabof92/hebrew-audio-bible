@@ -5,14 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [OriginalWord::class, VerseTimestamp::class, AudioSource::class, Book::class], version = 1)
+@Database(entities = [OriginalWord::class, VerseTimestamp::class, AudioSource::class, Book::class, RootWord::class], version = 1)
 abstract class BibleDatabase: RoomDatabase() {
     abstract fun originalWordDao(): OriginalWordDao
     abstract fun verseTimestampDao(): VerseTimestampDao
     abstract fun audioSourceDao(): AudioSourceDao
     abstract fun booksDao(): BooksDao
-
-
+    abstract fun rootWordDao(): RootWordDao
 
     companion object{
         @Volatile

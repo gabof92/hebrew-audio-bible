@@ -38,7 +38,7 @@ interface BollsBibleApiService {
     @GET("dictionary-definition/BDBT/{query}")
     suspend fun getWordDefinitions(
         @Path("query") query: String,
-    ): List<RootWord>
+    ): List<RootWordResult>
 }
 
 object BollsBibleApi {

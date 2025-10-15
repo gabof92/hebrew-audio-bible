@@ -25,7 +25,8 @@ class MainActivity : ComponentActivity() {
             db.originalWordDao(),
             db.audioSourceDao(),
             db.verseTimestampDao(),
-            db.booksDao()
+            db.booksDao(),
+            db.rootWordDao(),
         )
         val repository = BibleRepository(localDataSource, remoteDataSource)
 

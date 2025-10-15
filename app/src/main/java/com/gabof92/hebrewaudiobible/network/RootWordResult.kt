@@ -2,8 +2,8 @@ package com.gabof92.hebrewaudiobible.network
 
 import com.squareup.moshi.Json
 
-data class RootWord(
-    @Json(name = "topic") val strong: String,
+data class RootWordResult(
+    @Json(name = "topic") val strongs: String,
     @Json(name = "definition") val longDefinition: String,
     @Json(name = "lexeme") val hebrewWord: String,
     @Json(name = "transliteration") val transliteration: String,

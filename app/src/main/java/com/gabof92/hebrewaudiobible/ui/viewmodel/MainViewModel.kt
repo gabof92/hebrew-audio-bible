@@ -1,5 +1,6 @@
 package com.gabof92.hebrewaudiobible.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -77,8 +78,9 @@ class MainViewModel(
 
                 audioManager.updateAudioSource(newAudioUrl)
                 startTimestampCheck()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = "Failed to load data") }
+                Log.e("MainViewModel", "Error loading data", e)
             }
         }
     }

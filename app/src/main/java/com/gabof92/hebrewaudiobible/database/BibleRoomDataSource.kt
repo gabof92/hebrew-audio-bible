@@ -6,12 +6,14 @@ class BibleRoomDataSource(
     val originalWordDao: OriginalWordDao,
     val audioSourceDao: AudioSourceDao,
     val verseTimestampDao: VerseTimestampDao,
-    val booksDao: BooksDao
+    val booksDao: BooksDao,
+    val rootWordDao: RootWordDao,
 ) {
     suspend fun getVerseWords(book: Int, chapter: Int, verse: Int) =
         originalWordDao.getOriginalVerse(book, chapter, verse)
 
-    suspend fun getBook(bookNumber: Int) = booksDao.getBookByNumber(bookNumber)
+    suspend fun getBook(bookNumber: Int) =
+        booksDao.getBookByNumber(bookNumber)
 
     suspend fun getVerses(book: Int, chapter: Int): List<VerseText> =
         originalWordDao.getVerseTexts(book, chapter)
@@ -21,4 +23,11 @@ class BibleRoomDataSource(
 
     suspend fun getChapterTimestamps(book: Int, chapter: Int) =
         verseTimestampDao.getChapterTimestamps(book, chapter)
+
+    suspend fun getRootWord(language: String, strongs: Int) =
+        rootWordDao.getRootWord(language, strongs)
+
+    suspend fun insertRootWord(rootWord: RootWord) =
+        rootWordDao.insert(rootWord)
+
 }

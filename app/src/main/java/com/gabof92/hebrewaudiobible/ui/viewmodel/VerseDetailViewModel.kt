@@ -45,14 +45,7 @@ class VerseDetailViewModel(
             _uiState.value.copy(isLoading = true)
             try {
                 val book = repository.getBook(bookNumber)
-                val originalWords = repository.getVerseWords(bookNumber, chapter, verse)
-                val wordPairs = mutableListOf<WordPair>()
-                originalWords.forEach { word ->
-                    val bestDefinition =
-                        repository.getWordDefinitions("H${word.strongsHeb}")
-                            .maxBy { it.weight }
-                    wordPairs.add(WordPair(word, bestDefinition))
-                }
+                val wordPairs = repository.getWordPairs(bookNumber, chapter, verse)
                 _uiState.update {
                     it.copy(
                         book = book,

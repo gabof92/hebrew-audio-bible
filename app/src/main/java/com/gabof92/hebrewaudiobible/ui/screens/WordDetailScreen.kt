@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.gabof92.hebrewaudiobible.network.RootWord
+import com.gabof92.hebrewaudiobible.database.RootWord
 
 
 @Composable
@@ -59,7 +59,7 @@ fun WordDetailScreen(
                     .padding(16.dp) // Padding inside the card
             ) {
                 Text(
-                    text = "Root Word (${word.strong})",
+                    text = "Root Word (${word.strongs})",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Bold

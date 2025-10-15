@@ -38,7 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.gabof92.hebrewaudiobible.data.BibleRepository
 import com.gabof92.hebrewaudiobible.data.WordPair
-import com.gabof92.hebrewaudiobible.network.RootWord
+import com.gabof92.hebrewaudiobible.database.RootWord
 import com.gabof92.hebrewaudiobible.ui.viewmodel.DetailUiState
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
 import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
@@ -89,7 +89,6 @@ fun VerseDetailScreenContent(
         ) {
             Column {
                 TopBanner(
-
                     text =
                         if (uiState.book != null)
                             "${uiState.book.name} ${uiState.chapter}:${uiState.verse}"
