@@ -31,15 +31,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.gabof92.hebrewaudiobible.database.RootWord
+import com.gabof92.hebrewaudiobible.domain.RootWord
 
 
 @Composable
 fun WordDetailScreen(
     word: RootWord,
-    onDismissRequest: () -> Unit // You'll still need a way to "close" it
+    onDismissRequest: () -> Unit
 ) {
-    // This Box will act as the overlay/scrim
     Box(
         modifier = Modifier
             .fillMaxSize()

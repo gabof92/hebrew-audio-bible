@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     //kps for room dependencies
     alias(libs.plugins.devtools.ksp) apply false
+    alias(libs.plugins.jetbrains.kotlin.jvm) apply false
 }

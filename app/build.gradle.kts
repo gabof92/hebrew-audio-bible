@@ -75,4 +75,9 @@ dependencies {
     implementation(libs.moshi.kotlin)
     //interceptor to log retrofit requests
     implementation(libs.okhttp3.logging.interceptor)
+
+    //modules
+    implementation(project(":usecases"))
+    implementation(project(":data"))
+    implementation(project(":domain"))
 }

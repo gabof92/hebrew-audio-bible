@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Hebrew Audio Bible"
 include(":app")
- 
+include(":domain")
+include(":usecases")
+include(":data")

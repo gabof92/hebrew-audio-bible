@@ -36,12 +36,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.gabof92.hebrewaudiobible.data.BibleRepository
-import com.gabof92.hebrewaudiobible.data.WordPair
-import com.gabof92.hebrewaudiobible.database.RootWord
-import com.gabof92.hebrewaudiobible.ui.viewmodel.DetailUiState
-import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModel
-import com.gabof92.hebrewaudiobible.ui.viewmodel.VerseDetailViewModelFactory
+import com.gabof92.hebrewaudiobible.domain.RootWord
+import com.gabof92.hebrewaudiobible.domain.WordPair
+import com.gabof92.hebrewaudiobible.presentation.viewmodel.DetailUiState
+import com.gabof92.hebrewaudiobible.presentation.viewmodel.VerseDetailViewModel
+import com.gabof92.hebrewaudiobible.presentation.viewmodel.VerseDetailViewModelFactory
+import com.gabof92.hebrewaudiobible.usecases.GetBookUseCase
+import com.gabof92.hebrewaudiobible.usecases.GetWordPairsUseCase
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -52,14 +53,19 @@ data class VerseDetailScreen(
 )
 
 fun NavGraphBuilder.verseDetailScreenDestination(
-    repository: BibleRepository,
+    bookUseCase: GetBookUseCase,
+    wordPairsUseCase: GetWordPairsUseCase,
 ) {
     composable<VerseDetailScreen> {
         val args = it.toRoute<VerseDetailScreen>()
         val viewModel: VerseDetailViewModel =
             viewModel(
                 factory = VerseDetailViewModelFactory(
-                    repository, args.book, args.chapter, args.verse
+                    bookUseCase,
+                    wordPairsUseCase,
+                    args.book,
+                    args.chapter,
+                    args.verse
                 )
             )
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
