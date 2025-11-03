@@ -1,17 +1,19 @@
 package com.gabof92.hebrewaudiobible.presentation.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.gabof92.hebrewaudiobible.domain.Book
 import com.gabof92.hebrewaudiobible.domain.WordPair
 import com.gabof92.hebrewaudiobible.usecases.GetBookUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetWordPairsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class DetailUiState(
     val isLoading: Boolean = false,
@@ -22,13 +24,16 @@ data class DetailUiState(
     val wordList: List<WordPair> = emptyList(),
 )
 
-class VerseDetailViewModel(
+@HiltViewModel
+class VerseDetailViewModel @Inject constructor(
     private val getBookUseCase: GetBookUseCase,
     private val getWordPairsUseCase: GetWordPairsUseCase,
-    book: Int,
-    chapter: Int,
-    verse: Int,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    private val book: Int = checkNotNull(savedStateHandle["book"])
+    private val chapter: Int = checkNotNull(savedStateHandle["chapter"])
+    private val verse: Int = checkNotNull(savedStateHandle["verse"])
 
     private val _uiState = MutableStateFlow(
         DetailUiState(
@@ -76,28 +81,5 @@ class VerseDetailViewModel(
     fun sortWordsByEnglish() {
         val sortedList = uiState.value.wordList.sortedBy { it.originalWord.englishSort }
         _uiState.update { it.copy(wordList = sortedList) }
-    }
-}
-
-class VerseDetailViewModelFactory(
-    private val getBookUseCase: GetBookUseCase,
-    private val getWordPairsUseCase: GetWordPairsUseCase,
-    private val book: Int,
-    private val chapter: Int,
-    private val verse: Int,
-) :
-    ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(VerseDetailViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return VerseDetailViewModel(
-                getBookUseCase,
-                getWordPairsUseCase,
-                book,
-                chapter,
-                verse,
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -13,5 +13,10 @@ kotlin {
 }
 
 dependencies{
+    //Access to other modules
     implementation(project(":domain"))
+
+    /*Provides annotations @Inject and @Singleton
+    for injecting dependencies directly to constructor*/
+    implementation(libs.javax.inject)
 }

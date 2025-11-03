@@ -45,14 +45,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.gabof92.hebrewaudiobible.domain.VerseText
 import com.gabof92.hebrewaudiobible.presentation.viewmodel.MainUiState
 import com.gabof92.hebrewaudiobible.presentation.viewmodel.MainViewModel
-import com.gabof92.hebrewaudiobible.presentation.viewmodel.MainViewModelFactory
 import com.gabof92.hebrewaudiobible.ui.ChapterSelectorDialog
 import com.gabof92.hebrewaudiobible.ui.theme.HebrewAudioBibleTheme
 import kotlinx.coroutines.launch
@@ -95,12 +94,11 @@ fun rememberMainScreenState(): MainScreenState {
 }
 
 fun NavGraphBuilder.mainScreenDestination(
-    viewModelFactory: MainViewModelFactory,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit
 ) {
     composable<MainScreen> {
 
-        val viewModel: MainViewModel = viewModel(factory = viewModelFactory)
+        val viewModel: MainViewModel = hiltViewModel()
 
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

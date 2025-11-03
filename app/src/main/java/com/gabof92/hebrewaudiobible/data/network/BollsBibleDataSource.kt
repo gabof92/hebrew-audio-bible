@@ -2,8 +2,10 @@ package com.gabof92.hebrewaudiobible.data.network
 
 import com.gabof92.hebrewaudiobible.data.RemoteDataSource
 import com.gabof92.hebrewaudiobible.domain.RootWord
+import javax.inject.Inject
 
-class BollsBibleDataSource : RemoteDataSource {
+class BollsBibleDataSource @Inject constructor()
+    : RemoteDataSource {
     override suspend fun getWordDefinition(strongsNumber: Int): RootWord {
         return BollsBibleApi.retrofitService
             .getWordDefinitions("H$strongsNumber")

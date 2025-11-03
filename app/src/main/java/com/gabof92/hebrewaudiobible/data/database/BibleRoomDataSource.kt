@@ -15,8 +15,9 @@ import com.gabof92.hebrewaudiobible.domain.OriginalWord
 import com.gabof92.hebrewaudiobible.domain.RootWord
 import com.gabof92.hebrewaudiobible.domain.VerseText
 import com.gabof92.hebrewaudiobible.domain.VerseTimeStamp
+import javax.inject.Inject
 
-class BibleRoomDataSource(
+class BibleRoomDataSource @Inject constructor(
     val originalWordDao: OriginalWordDao,
     val audioSourceDao: AudioSourceDao,
     val verseTimestampDao: VerseTimestampDao,

@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     //KSP devtools (for room dependencies)
     alias(libs.plugins.devtools.ksp)
+    //Hilt dependency injection
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
@@ -75,6 +77,11 @@ dependencies {
     implementation(libs.moshi.kotlin)
     //interceptor to log retrofit requests
     implementation(libs.okhttp3.logging.interceptor)
+
+    //Hilt
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
 
     //modules
     implementation(project(":usecases"))

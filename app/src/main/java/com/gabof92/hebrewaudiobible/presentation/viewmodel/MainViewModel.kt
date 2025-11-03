@@ -2,7 +2,6 @@ package com.gabof92.hebrewaudiobible.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.gabof92.hebrewaudiobible.domain.Book
 import com.gabof92.hebrewaudiobible.domain.VerseText
@@ -12,6 +11,7 @@ import com.gabof92.hebrewaudiobible.usecases.GetAudioUrlByChapterUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetBookUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetTimestampsByChapterUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetVersesByChapterUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class MainUiState(
     val isLoading: Boolean = false,
@@ -32,7 +33,8 @@ data class MainUiState(
     val currentAudioVerse: Int = 0,
 )
 
-class MainViewModel(
+@HiltViewModel
+class MainViewModel @Inject constructor(
     private val getBookUseCase: GetBookUseCase,
     private val getVersesUseCase: GetVersesByChapterUseCase,
     private val getTimestampsUseCase: GetTimestampsByChapterUseCase,
@@ -133,24 +135,3 @@ class MainViewModel(
 
 }
 
-
-class MainViewModelFactory(
-    private val getBookUseCase: GetBookUseCase,
-    private val getVersesUseCase: GetVersesByChapterUseCase,
-    private val getTimestampsUseCase: GetTimestampsByChapterUseCase,
-    private val getAudioUrlUseCase: GetAudioUrlByChapterUseCase,
-) :
-    ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return MainViewModel(
-                getBookUseCase,
-                getVersesUseCase,
-                getTimestampsUseCase,
-                getAudioUrlUseCase,
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}

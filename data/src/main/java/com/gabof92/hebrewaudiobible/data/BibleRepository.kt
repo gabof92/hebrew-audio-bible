@@ -2,8 +2,9 @@ package com.gabof92.hebrewaudiobible.data
 
 import com.gabof92.hebrewaudiobible.domain.RootWord
 import com.gabof92.hebrewaudiobible.domain.WordPair
+import javax.inject.Inject
 
-class BibleRepository(
+class BibleRepository @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val remoteDataSource: RemoteDataSource
 ) {
