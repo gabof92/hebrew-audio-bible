@@ -8,6 +8,7 @@ import com.gabof92.hebrewaudiobible.domain.VerseTimeStamp
 
 interface LocalDataSource {
     suspend fun getBook(bookNumber: Int): Book
+    suspend fun getAllBooks(): List<Book>
     suspend fun getChapterAudioUrl(book: Int, chapter: Int): String
     suspend fun getVerseWords(book: Int, chapter: Int, verse: Int): List<OriginalWord>
     suspend fun getVerses(book: Int, chapter: Int): List<VerseText>

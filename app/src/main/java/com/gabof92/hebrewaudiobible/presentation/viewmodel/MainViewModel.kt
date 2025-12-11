@@ -3,10 +3,12 @@ package com.gabof92.hebrewaudiobible.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gabof92.hebrewaudiobible.data.preferences.PreferencesRepository
 import com.gabof92.hebrewaudiobible.domain.Book
 import com.gabof92.hebrewaudiobible.domain.VerseText
 import com.gabof92.hebrewaudiobible.domain.VerseTimeStamp
 import com.gabof92.hebrewaudiobible.presentation.AudioManager
+import com.gabof92.hebrewaudiobible.usecases.GetAllBooksUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetAudioUrlByChapterUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetBookUseCase
 import com.gabof92.hebrewaudiobible.usecases.GetTimestampsByChapterUseCase
@@ -17,6 +19,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -26,19 +30,25 @@ data class MainUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val book: Book = Book(19, "Psalms", 150),
+    val books: List<Book> = emptyList(),
     val chapter: Int = 1,
     val verses: List<VerseText> = emptyList(),
     val timestamps: List<VerseTimeStamp> = emptyList(),
     val isAudioPlaying: Boolean = false,
     val currentAudioVerse: Int = 0,
+    val showHebrewText: Boolean = true,
+    val showTransliteration: Boolean = true,
+    val showEnglishText: Boolean = true,
 )
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getBookUseCase: GetBookUseCase,
+    private val getAllBooksUseCase: GetAllBooksUseCase,
     private val getVersesUseCase: GetVersesByChapterUseCase,
     private val getTimestampsUseCase: GetTimestampsByChapterUseCase,
     private val getAudioUrlUseCase: GetAudioUrlByChapterUseCase,
+    private val preferencesRepository: PreferencesRepository,
     ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -48,7 +58,6 @@ class MainViewModel @Inject constructor(
 
     private var timestampCheckJob: Job? = null
 
-
     init {
         // update uiState when audioManager starts/stops playing
         viewModelScope.launch {
@@ -56,19 +65,83 @@ class MainViewModel @Inject constructor(
                 _uiState.update { it.copy(isAudioPlaying = playing) }
             }
         }
-        // Initial data load
-        loadVerses(uiState.value.book.number, uiState.value.chapter)
+
+        //Observing chapter change only
+        viewModelScope.launch {
+            preferencesRepository.userPreferences
+                .map{ Pair(it.book, it.chapter) }
+                .distinctUntilChanged()
+                .collect { preferences ->
+                loadVerses(
+                    preferences.first,
+                    preferences.second
+                )
+            }
+        }
+
+        //Observing text visibility change only
+        viewModelScope.launch {
+            preferencesRepository.userPreferences
+                .map{ Triple(it.showHebrew, it.showTransliteration, it.showEnglish) }
+                .distinctUntilChanged()
+                .collect { preferences ->
+                    _uiState.update {
+                        it.copy(
+                            showHebrewText = preferences.first,
+                            showTransliteration = preferences.second,
+                            showEnglishText = preferences.third,
+                        )
+                    }
+                }
+        }
     }
 
-    fun loadVerses(bookNumber: Int = uiState.value.book.number,
-                   chapter: Int
-    ) {
+    fun changeChapter(bookNumber: Int, chapter: Int){
         viewModelScope.launch {
+            preferencesRepository.updateChapter(bookNumber, chapter)
+        }
+    }
+
+    fun previousChapter(){
+        val currentChapter = uiState.value.chapter
+        val previousChapter = currentChapter - 1
+        val currentBook = uiState.value.book.number
+        val previousBook = currentBook - 1
+        if(previousBook < 1 && previousChapter < 1) return
+        if(previousChapter < 1) {
+            val lastChapter = uiState.value.books[previousBook - 1].chapters
+            changeChapter(previousBook, lastChapter)
+        }
+        else
+            changeChapter(currentBook, previousChapter)
+    }
+
+    fun nextChapter(){
+        val currentChapter = uiState.value.chapter
+        val nextChapter = currentChapter + 1
+        val currentBook = uiState.value.book.number
+        val nextBook = currentBook + 1
+        if(nextBook > uiState.value.books.size
+            && nextChapter > uiState.value.book.chapters)
+            return
+        if(nextChapter > uiState.value.book.chapters)
+            changeChapter(nextBook, 1)
+        else
+            changeChapter(currentBook, nextChapter)
+    }
+
+    fun updateTextVisibility(showHebrew: Boolean?, showTransliteration: Boolean?, showEnglish: Boolean?)
+    = viewModelScope.launch {
+        preferencesRepository.updateTextVisibility(showHebrew, showTransliteration, showEnglish)
+    }
+
+    suspend fun loadVerses(bookNumber: Int = uiState.value.book.number, chapter: Int) {
             try {
                 _uiState.update { it.copy(isLoading = true, error = null) }
 
                 //loading data
                 val book = getBookUseCase(bookNumber)
+                val books = getAllBooksUseCase()
                 val verses = getVersesUseCase(bookNumber, chapter)
                 val timestamps = getTimestampsUseCase(bookNumber, chapter)
                 val newAudioUrl = getAudioUrlUseCase(bookNumber, chapter)
@@ -77,6 +150,7 @@ class MainViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         book = book,
+                        books = books,
                         chapter = chapter,
                         verses = verses,
                         timestamps = timestamps,
@@ -90,7 +164,6 @@ class MainViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, error = "Failed to load data") }
                 Log.e("MainViewModel", "Error loading data", e)
             }
-        }
     }
 
     fun togglePlay() {

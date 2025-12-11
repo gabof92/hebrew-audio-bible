@@ -62,29 +62,15 @@ import kotlinx.serialization.Serializable
 object MainScreen
 
 class MainScreenState() {
-    var showHebrewText by mutableStateOf(true)
-    var showTransliteration by mutableStateOf(true)
-    var showEnglishText by mutableStateOf(true)
-    var showChapterSelector by mutableStateOf(false)
 
-    fun toggleHebrewText() {
-        showHebrewText = !showHebrewText
+    var showChapterDialog by mutableStateOf(false)
+
+    fun openChapterDialog() {
+        showChapterDialog = true
     }
 
-    fun toggleTransliteration() {
-        showTransliteration = !showTransliteration
-    }
-
-    fun toggleEnglishText() {
-        showEnglishText = !showEnglishText
-    }
-
-    fun openChapterSelector() {
-        showChapterSelector = true
-    }
-
-    fun dismissChapterSelector() {
-        showChapterSelector = false
+    fun dismissChapterDialog() {
+        showChapterDialog = false
     }
 }
 
@@ -105,12 +91,15 @@ fun NavGraphBuilder.mainScreenDestination(
         MainScreen(
             uiState = uiState,
             onNavigateToVerseDetail = onNavigateToVerseDetail,
-            onChapterChange = { newChapter ->
-                viewModel.loadVerses(chapter = newChapter)
+            onChapterChange = { newBook, newChapter ->
+                viewModel.changeChapter(newBook, newChapter)
             },
+            nextChapter = { viewModel.nextChapter() },
+            previousChapter = { viewModel.previousChapter()},
             onVerseClick = { verseNumber -> viewModel.seekAudioByVerse(verseNumber) },
             onTogglePlay = { viewModel.togglePlay() },
             onRestartAudio = { viewModel.seekAudio(0) },
+            onToggleTextVisibility = viewModel::updateTextVisibility
         )
     }
 }
@@ -120,10 +109,13 @@ fun MainScreen(
     screenState: MainScreenState = rememberMainScreenState(),
     uiState: MainUiState,
     onNavigateToVerseDetail: (book: Int, chapter: Int, verse: Int) -> Unit,
-    onChapterChange: (Int) -> Unit,
+    onChapterChange: (Int, Int) -> Unit,
+    nextChapter: () -> Unit,
+    previousChapter: () -> Unit,
     onTogglePlay: () -> Unit,
     onRestartAudio: () -> Unit,
     onVerseClick: (Int) -> Unit = {},
+    onToggleTextVisibility: (Boolean?, Boolean?, Boolean?) -> Unit
 ) {
 
     val bottomBannerHeight = 56.dp
@@ -149,17 +141,9 @@ fun MainScreen(
             Column {
                 TopBanner(
                     text = "${uiState.book.name} ${uiState.chapter}",
-                    onLeftCLick = {
-                        val previousChapter = uiState.chapter - 1
-                        if (previousChapter >= 1)
-                            onChapterChange(previousChapter)
-                    },
-                    onTextCLick = screenState::openChapterSelector,
-                    onRightClick = {
-                        val nextChapter = uiState.chapter + 1
-                        if (nextChapter <= uiState.book.chapters)
-                            onChapterChange(nextChapter)
-                    }
+                    onLeftCLick = previousChapter,
+                    onTextCLick = screenState::openChapterDialog,
+                    onRightClick = nextChapter
                 )
 
                 LazyColumn(
@@ -172,9 +156,9 @@ fun MainScreen(
                     items(uiState.verses) { verse ->
                         VerseListItem(
                             verse = verse,
-                            showHebrewText = screenState.showHebrewText,
-                            showTransliteration = screenState.showTransliteration,
-                            showEnglishText = screenState.showEnglishText,
+                            showHebrewText = uiState.showHebrewText,
+                            showTransliteration = uiState.showTransliteration,
+                            showEnglishText = uiState.showEnglishText,
                             onItemClick = { onVerseClick(verse.verse) },
                             onItemLongClick = {
                                 onNavigateToVerseDetail(
@@ -193,17 +177,19 @@ fun MainScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .height(bottomBannerHeight),
-                screenState = screenState,
+                uiState = uiState,
                 onTogglePlayClick = onTogglePlay,
                 isAudioPlaying = uiState.isAudioPlaying,
-                onRestartClick = onRestartAudio
+                onRestartClick = onRestartAudio,
+                onToggleTextVisibility = onToggleTextVisibility
             )
 
-            if (screenState.showChapterSelector) {
+            if (screenState.showChapterDialog) {
                 ChapterSelectorDialog(
-                    chapters = uiState.book.chapters,
+                    book = uiState.book,
+                    books = uiState.books,
                     onChapterSelected = onChapterChange,
-                    onDismissRequest = screenState::dismissChapterSelector
+                    onDismissRequest = screenState::dismissChapterDialog
                 )
             }
         }
@@ -325,10 +311,11 @@ private fun TopBanner(
 @Composable
 private fun BottomBanner(
     modifier: Modifier = Modifier,
-    screenState: MainScreenState,
+    uiState: MainUiState,
     isAudioPlaying: Boolean,
     onTogglePlayClick: () -> Unit,
-    onRestartClick: () -> Unit
+    onRestartClick: () -> Unit,
+    onToggleTextVisibility: (Boolean?, Boolean?, Boolean?) -> Unit
 ) {
     var expandMenu by remember { mutableStateOf(false) }
     Row(
@@ -395,12 +382,12 @@ private fun BottomBanner(
                     trailingIcon = {
                         Icon(
                             imageVector =
-                                if (screenState.showHebrewText) Icons.Default.Check
+                                if (uiState.showHebrewText) Icons.Default.Check
                                 else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = screenState::toggleHebrewText,
+                    onClick = { onToggleTextVisibility(!uiState.showHebrewText, null, null) },
                 )
                 HorizontalDivider()
                 DropdownMenuItem(
@@ -408,24 +395,24 @@ private fun BottomBanner(
                     trailingIcon = {
                         Icon(
                             imageVector =
-                                if (screenState.showTransliteration)
+                                if (uiState.showTransliteration)
                                     Icons.Default.Check
                                 else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = screenState::toggleTransliteration,
+                    onClick = { onToggleTextVisibility(null, !uiState.showTransliteration, null) },
                 )
                 HorizontalDivider()
                 DropdownMenuItem(
                     text = { Text("English Text") },
                     trailingIcon = {
                         Icon(
-                            imageVector = if (screenState.showEnglishText) Icons.Default.Check else Icons.Default.Close,
+                            imageVector = if (uiState.showEnglishText) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = null
                         )
                     },
-                    onClick = screenState::toggleEnglishText,
+                    onClick = { onToggleTextVisibility(null, null, !uiState.showEnglishText) },
                 )
             }
         }

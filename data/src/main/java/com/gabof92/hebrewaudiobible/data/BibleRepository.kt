@@ -14,6 +14,9 @@ class BibleRepository @Inject constructor(
     suspend fun getBook(bookNumber: Int) =
         localDataSource.getBook(bookNumber)
 
+    suspend fun getAllBooks() =
+        localDataSource.getAllBooks()
+
     suspend fun getVerses(book: Int, chapter: Int) =
         localDataSource.getVerses(book, chapter)
 

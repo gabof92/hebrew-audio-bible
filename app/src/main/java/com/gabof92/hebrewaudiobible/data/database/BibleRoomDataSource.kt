@@ -27,6 +27,9 @@ class BibleRoomDataSource @Inject constructor(
     override suspend fun getBook(bookNumber: Int) =
         booksDao.getBookByNumber(bookNumber).toDomainModel()
 
+    override suspend fun getAllBooks() =
+        booksDao.getAllBooks().toDomainModel()
+
     override suspend fun getChapterAudioUrl(book: Int, chapter: Int) =
         audioSourceDao.getChapterAudioUrl(book, chapter)
 
@@ -47,6 +50,10 @@ class BibleRoomDataSource @Inject constructor(
 }
 
 /* Mappers */
+@JvmName("bookListToDomainModel")
+private fun List<BookEntity>.toDomainModel(): List<Book> =
+    map { it.toDomainModel() }
+
 private fun BookEntity.toDomainModel(): Book = Book(
     number = number,
     name = name,
